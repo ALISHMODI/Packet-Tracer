@@ -1,0 +1,98 @@
+#include "SIM808.h"
+#include <SoftwareSerial.h>
+#include "sms.h"
+#include "call.h"
+
+#include <TinyGPS++.h>
+
+//To change pins for Software/Hardware Serial, use 27, 28 lines in GSM.cpp.
+//To use Arduino Mega please define MEGA in line 5 in GSM.h.
+
+#include <SPI.h>
+#include <SD.h>
+
+//Mega CS pin
+const int chipSelect = 53;
+
+
+//We have to create the classes for SMSs and calls.
+CallGSM call;
+SMSGSM sms;
+
+char number[20];
+byte stat = 0;
+int value = 0;
+
+char value_str[5];
+
+//GPS Variable
+
+// The TinyGPS++ object
+TinyGPSPlus gps;
+
+const char *googlePrefix = "http://maps.google.com/maps?q=";
+
+
+double Lat;
+double Long;
+int day, month, year;
+int hour, minute, second;
+
+int num_sat;
+
+boolean one_point_true = false;
+
+
+
+void setup()
+{
+
+  //Serial connection.
+  Serial.begin(9600); 
+  
+  //GPRS connection
+  Serial.print(F("Starting GSM..."));
+  //Start configuration of shield with baudrate.
+  if (gsm.begin(9600))
+    Serial.println(F("READY"));
+  else Serial.println(F("IDLE"));
+
+  //GPS connection 
+  Serial.println(F("Starting GPS"));
+  //GPS com port
+  Serial2.begin(9600);
+
+  //SD Card start
+  Serial.print(F("Initializing SD card..."));
+  // make sure that the default chip select pin is set to
+  // output, even if you don't use it:
+  pinMode(53, OUTPUT);
+
+  // see if the card is present and can be initialized:
+  if (!SD.begin(chipSelect)) {
+    Serial.println(F("Card failed, or not present"));
+    // don't do anything more:
+    return;
+  }
+  Serial.println(F("card initialized."));
+
+}
+
+
+//******************************************************************************
+//Main loop
+void loop()
+{
+
+  Get_GPS(); // Get the position
+
+  Check_call(); //See if anyone is calling
+
+
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+//******************************************************************************
+// Get the positio
